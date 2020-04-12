@@ -1,0 +1,112 @@
+<html ng-app="warren">
+<head>
+    <meta charset="UTF-8">
+    <title>Warren</title>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <!--<script src="../node_modules/angular/angular.min.js"></script>-->
+    <!--<script src="../node_modules/zingchart/client/zingchart.min.js"></script>-->
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.19/angular.js"></script>
+    <script src="https://cdn.zingchart.com/zingchart.min.js"></script>
+    <!--<script type=text/javascript" src="../node_modules/zingchart-angularjs/src/zingchart-angularjs.js"></script>-->
+    <script src = "https://cdn.zingchart.com/angular/zingchart-angularjs.js" ></script>
+
+    <!--<script src="../statics/js/app.js"></script>-->
+    <script >
+        angular.module("warren", ["zingchart-angularjs"]).controller("mainController", ["$http","$scope",function ($http,$scope) {
+            self=this;
+
+            console.log("start");
+            $scope.myData = [1,2,28,4,5];
+            $scope.money=10000;
+            $scope.test="hello";
+            desc=document.getElementById("desc");
+            video=document.getElementById("video");
+            $http({
+                url: "http://localhost:5000/about/description",
+                method: "GET"
+            }).then(function successCallback(response) {
+                console.log(response.data);
+                desc.innerHTML=response.data;
+                setTimeout(self.getVideo,3000);
+            //$scope.stocks=response.data;
+            // this callbalsck will be called asynchronously
+            // when the response is available
+            }, function errorCallback(response) {
+                console.log(response);
+            // called asynchronously if an error occurs
+            // or server returns response with an error status.
+            });
+            
+
+            self.getVideo=function () {
+                $http({
+                    url: "http://localhost:5000/about/video",
+                    method: "GET",
+                    responseType: 'blob'
+                }).then(function successCallback(response) {
+                    console.log("video success");
+                    var vid=document.createElement("video");
+                    vid.controls=true;
+                    vid.src= window.URL.createObjectURL(new Blob([response.data]));
+                    video.appendChild(vid);
+                    // this callbalsck will be called asynchronously
+                    // when the response is available
+                }, function errorCallback(response) {
+                    console.log(response);
+                    // called asynchronously if an error occurs
+                    // or server returns response with an error status.
+                });
+            };            
+
+
+        }])
+    </script>
+    <link rel="stylesheet" href="../statics/css/style.css">
+</head>
+<body>
+<!--<div class="navbar navbar-default navbar-fixed-top">-->
+    <!--<ul class="nav navbar-nav"> <li class="active"><a href="#">Home</a></li> <li><a href="#">Link</a></li> <li><a href="#">Link</a></li> </ul>-->
+<!--</div>-->
+<!--<div ng-controller="mainController as ctrl">
+    <button ng-click="ctrl.home()">Change</button>
+</div>-->
+
+<div ng-controller="mainController as ctrl" class="container-fluid">
+
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">Warren</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+           <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    <li class="active"><a ng-click="ctrl.home()" href="index.html">Home <span class="sr-only">(current)</span></a></li>
+                    <li><a ng-click="ctrl.proforio()">Proforio</a></li>
+                    <li><a ng-click="about()">About</a></li>
+                </ul>
+
+            </div><!-- /.navbar-collapse -->
+       </div><!-- /.container-fluid -->
+    </nav>
+
+    <div class="container">
+        <p id="desc"></p>   
+        <br>
+        <div id="video"></div>
+    </div>
+
+</div>
+</body>
+</html>

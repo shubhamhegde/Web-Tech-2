@@ -1,0 +1,70 @@
+.panel-default>.panel-heading{
+    background-color: aquamarine;
+}
+
+.name{
+    margin-right:50px;
+}
+
+
+.task {
+    background-color: #ccc;
+    margin: 9px 0;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+    border: 1px solid #aaa;
+    white-space: nowrap;
+    user-select: none;
+    cursor: pointer;
+    display: table;
+    width: 100%;
+}
+
+.task.disabled {
+    color: #888;
+    background-color: #eee!important;
+    border-color: #ccc;
+    cursor: default;
+}
+
+.task > span {
+    display:inline-block;
+    width:100%;
+    line-height: 24px;
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.task > .buttons-container {
+    width: 60px;
+}
+
+.task button {
+    height: 24px;
+    width: 24px;
+    padding: 2px;
+}
+
+.task-tooltip:not(:last-child) {
+    border-bottom:1px solid #ddd;
+    padding-bottom:5px;
+    margin-bottom:5px;
+}
+
+.task > div{
+    display: table-cell;
+    padding: 4px 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+
+.task > .duration {
+    width: 35px;
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+
+
+

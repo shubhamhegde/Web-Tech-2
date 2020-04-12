@@ -1,0 +1,13 @@
+<div>
+<h1>Stocks Trading System</h1>
+<br>
+<h5>
+<p>Trading for a living is an exciting idea, and stock trading systems can give you the life you want. A system is simply a set of rules that defines how you will enter and exit the financial markets to make money. Stock trading systems work because they eliminate emotion, create consistency and capture an edge in the markets.</p>
+
+<p>Most new traders fail and lose money because they take tips from others, they do what is popular, they do what sounds good at dinner parties, they do what is marketed heavily by the industry, they use someone else’s stock trading system – they don’t do what is profitable!</p>
+<br>
+<div class="panel panel-default">
+	<div class="panel-body" style="background-color: aquamarine;">I believe YOU can succeed where so many others have failed!</div>
+</div>
+</h5>
+</div>
