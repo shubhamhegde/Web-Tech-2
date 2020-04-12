@@ -1,0 +1,184 @@
+<html ng-app="warren">
+<head>
+
+    <style>
+        #container{
+        border:solid 1px black;
+        display:none
+        }
+        .fooditem{
+        
+            background-color:aquamarine;
+            color:black;    
+        }
+        .fooditem:hover{
+        
+            background-color:white;
+        }
+        body {
+        background-image: url("https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcQk6y-YREBbUhm3MdhFje3O_S-foKcnQJB7eUAxlGIxKnbWG7I4&usqp=CAU");
+        background-repeat: no-repeat;
+        background-size: cover;
+        }
+    </style>
+
+    <meta charset="UTF-8">
+    <title>Warren</title>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <!--<script src="../node_modules/angular/angular.min.js"></script>-->
+    <!--<script src="../node_modules/zingchart/client/zingchart.min.js"></script>-->
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.19/angular.js"></script>
+    <script src="https://cdn.zingchart.com/zingchart.min.js"></script>
+    <!--<script type=text/javascript" src="../node_modules/zingchart-angularjs/src/zingchart-angularjs.js"></script>-->
+    <script src = "https://cdn.zingchart.com/angular/zingchart-angularjs.js" ></script>
+
+    <!--<script src="../statics/js/app.js"></script>-->
+    <script >
+        angular.module("warren", ["zingchart-angularjs"]).controller("mainController", ["$http","$scope",function ($http,$scope) {
+            self=this;
+
+            console.log("start");
+            $scope.myData = [1,2,28,4,5];
+            $scope.money=10000;
+            $scope.test="hello";
+            
+            this.search=null;//if search box loaded after script then it'll be undefined, hence null
+            this.timer=null;
+            this.container=null;
+
+            self.getTerm=function(){
+                self.container=document.getElementById("container");
+                console.log("in getTerm");
+                if(self.timer){
+                    console.log("clearing timeout");
+                    clearTimeout(self.timer);//called every keypress. clears timer if pressed before 1s
+                }
+                self.timer=setTimeout(self.sendTerm,1000);
+            }
+
+            
+            self.sendTerm=function(){
+                console.log("in sendTerm");
+                self.search=document.getElementById("search");
+                if(localStorage.getItem(self.search.value)!=null)
+                {
+                    console.log(localStorage.getItem(self.search.value).split(","))  
+                    self.populateFood(localStorage.getItem(self.search.value).split(","));
+                }
+                else{
+
+                    data="{'term':"+self.search.value+"}";
+                    console.log(data);
+                    $http({
+                        url: "http://localhost:5000/check",
+                        method:"POST",
+                        data:JSON.stringify(data),
+                        headers: {'Content-Type': 'application/json' }
+                    
+                    }).then(function successCallback(response) {
+                        console.log(response.data);
+                        //debugger;
+                        //$scope.money=response.data;
+                        self.search=document.getElementById("search");
+                        //var container=document.getElementById("container");
+                        var resjson=response.data;
+                        if(resjson.length==0){
+                            //self.search.value="No results found"
+                            self.search.style.backgroundColor="red"
+                        }
+                        else{
+                            self.search.style.backgroundColor="white"
+                            self.populateFood(resjson);
+                            localStorage.setItem(self.search.value,resjson);//caching in local storage
+                        }
+                    // this callbalsck will be called asynchronously
+                    // when the response is available
+                    }, function errorCallback(response) {
+                        console.log(response);
+                    // called asynchronously if an error occurs
+                    // or server returns response with an error status.
+                });
+
+
+                }
+            }
+
+            self.populateFood=function(items){
+                self.container.innerHTML=""
+                for(var i=0;i<items.length;i++)
+                {
+                    var itemdiv=document.createElement("div");
+                    itemdiv.innerHTML=items[i];
+                    itemdiv.className="fooditem";
+                    itemdiv.onclick=self.setFood;
+                    self.container.appendChild(itemdiv);
+                }
+                container.style.display="block"
+            }
+
+            self.setFood=function(e){
+                self.search.value=e.target.innerHTML;
+                self.search.style.backgroundColor="white";
+                self.container.style.display="none"
+                self.container.innerHTML="";
+            
+            }
+
+
+        }])
+    </script>
+    <link rel="stylesheet" href="../statics/css/style.css">
+</head>
+<body>
+<!--<div class="navbar navbar-default navbar-fixed-top">-->
+    <!--<ul class="nav navbar-nav"> <li class="active"><a href="#">Home</a></li> <li><a href="#">Link</a></li> <li><a href="#">Link</a></li> </ul>-->
+<!--</div>-->
+<!--<div ng-controller="mainController as ctrl">
+    <button ng-click="ctrl.home()">Change</button>
+</div>-->
+
+<div ng-controller="mainController as ctrl" class="container-fluid">
+
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">Warren</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+           <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    <li class="active"><a ng-click="ctrl.home()" href="index.html">Home <span class="sr-only">(current)</span></a></li>
+                    <li><a ng-click="ctrl.proforio()">Proforio</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li><a href="check.html">Check</a></li>
+                </ul>
+
+            </div><!-- /.navbar-collapse -->
+       </div><!-- /.container-fluid -->
+    </nav>
+
+    <div class="container">
+        <h1>Stock Trading System</h1>
+        <br>
+        <h3>Search for the company you want to invest in!!!</h3> 
+        <br>
+        <div class="container">
+            <input type="text" id="search" ng-keypress="ctrl.getTerm()">
+            <br><br>
+            <div id="container"></div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
