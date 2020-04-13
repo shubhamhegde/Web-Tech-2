@@ -13,17 +13,35 @@
     <!--<script type=text/javascript" src="../node_modules/zingchart-angularjs/src/zingchart-angularjs.js"></script>-->
     <script src = "https://cdn.zingchart.com/angular/zingchart-angularjs.js" ></script>
 
-    <!--<script src="../statics/js/app.js"></script>-->
+    <!--<script type="text/javascript" src="app.js"></script>-->
     <script >
-        angular.module("warren", ["zingchart-angularjs"]).controller("mainController", ["$http","$scope",function ($http,$scope) {
+        angular.module("warren", ["zingchart-angularjs"]).controller("mainController", ["$http","$scope","$window",function ($http,$scope,$window) {
             self=this;
 
-            console.log("start");
+            console.log("about");
             $scope.myData = [1,2,28,4,5];
             $scope.money=10000;
             $scope.test="hello";
             desc=document.getElementById("desc");
             video=document.getElementById("video");
+
+            $http({
+                url: "http://localhost:5000/api/user",
+                method: "GET"
+            }).then(function successCallback(response) {
+                console.log(response.data);
+                $scope.user=response.data["uname"];
+                console.log($scope.user);
+                $scope.money=parseFloat(response.data["amount"]);
+            // this callbalsck will be called asynchronously
+            // when the response is available
+            }, function errorCallback(response) {
+                    console.log(response);
+            // called asynchronously if an error occurs
+            // or server returns response with an error status.
+            });
+
+
             $http({
                 url: "http://localhost:5000/about/description",
                 method: "GET"
@@ -40,7 +58,7 @@
             // or server returns response with an error status.
             });
             
-
+            
             self.getVideo=function () {
                 $http({
                     url: "http://localhost:5000/about/video",
@@ -59,7 +77,61 @@
                     // called asynchronously if an error occurs
                     // or server returns response with an error status.
                 });
-            };            
+            };  
+            
+            self.home=function(){
+                
+                console.log("in home");
+                 $http.get(
+                     "http://localhost:5000/stocks/all"                    
+                    ).then(function successCallback(response) {
+                    console.log(response.data);
+                    $scope.stocks=response.data;
+                    // this callbalsck will be called asynchronously
+                    // when the response is available
+                    }, function errorCallback(response) {
+                    console.log(response);
+                    // called asynchronously if an error occurs
+                    // or server returns response with an error status.
+                });
+            };
+
+            self.login = function(){
+                console.log("login");
+                var landingUrl = "login.html";
+                $window.location.href = landingUrl;
+            };
+
+            self.signup = function(){
+                console.log("signup");
+                var landingUrl = "signup.html";
+                $window.location.href = landingUrl;
+            };
+
+            self.logout = function(){
+                console.log("logout");
+                $http({
+                    url: "http://localhost:5000/api/logout",
+                    method: "GET"
+                }).then(function successCallback(response) {
+                        console.log(response.data);
+                        $scope.user=response.data["uname"];
+                        $scope.money=parseFloat(response.data["amount"]);
+                    }, function errorCallback(response) {
+                        console.log(response);
+                });
+            };
+
+            self.proforio = function(){
+                console.log("profile");
+                if($scope.user){
+                var landingUrl = "proforio.html";
+                $window.location.href = landingUrl;
+                }
+                else{
+                    return false;
+                }
+            };
 
 
         }])
@@ -93,9 +165,13 @@
            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
                     <li class="active"><a ng-click="ctrl.home()" href="index.html">Home <span class="sr-only">(current)</span></a></li>
-                    <li><a ng-click="ctrl.proforio()">Proforio</a></li>
                     <li><a href="about.html">About</a></li>
                     <li><a href="check.html">Check</a></li>
+                    <li><a ng-click="ctrl.proforio()" id="profile" >Proforio</a></li>                    
+                    <li ><a ng-click="ctrl.login()">Login </a></li>
+                    <li ><a ng-click="ctrl.signup()">Signup </a></li>
+                    <li ><a ng-click="ctrl.logout()">Logout </a></li>
+                    
                 </ul>
 
             </div><!-- /.navbar-collapse -->

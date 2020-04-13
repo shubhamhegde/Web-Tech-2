@@ -1,10 +1,135 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Proforio</title>
-</head>
-<body>
+<html ng-app="notesApp">
+  <head>
+    <title>Notes App</title>
+  <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+  </head>
+  <body ng-controller="MainCtrl as ctrl">
+    <div class="container">
+    	<nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">Warren</a>
+            </div>
 
-</body>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+           <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                  <li class="active"><a ng-click="ctrl.home()" href="index.html">Home <span class="sr-only">(current)</span></a></li>
+                  <li><a href="about.html">About</a></li>
+                  <li><a href="check.html">Check</a></li>
+                  <li><a ng-click="ctrl.proforio()">Proforio</a></li>
+                  <li ><a ng-click="ctrl.login()">Login </a></li>
+                  <li ><a ng-click="ctrl.signup()">Signup </a></li>
+                  <li ><a ng-click="ctrl.logout()">Logout </a></li>
+                </ul>
+
+                <ul class="nav navbar-nav navbar-right">
+                    <li><p class="navbar-text">User: {{name}}</p></li>
+                    <li><p class="navbar-text">Money: {{money}}</p></li>
+                </ul>
+            </div><!-- /.navbar-collapse -->
+       </div><!-- /.container-fluid -->
+    </nav>
+
+    	<div class="panel panel-default">
+    		<center><div class="panel-heading"><h2>Transaction logs of {{name}}</h2></div></center>
+    	<div ng-repeat="object in transactions">
+    		<br>
+    		<ul class="list-group">
+            	<!--<div ng-repeat="object1 in object" class="panel-body" >-->
+            		<li class="list-group-item">
+            			<span class="name">
+                		<div ng-repeat="(key,object2) in object" style="background-color: aquamarine;">
+	                		<!--<div class="panel-body">-->
+	                		<span class="name"><strong>{{key}}</strong> : {{object2}}</span>
+	                		
+	                		<!--</div>-->
+                		</div>
+                	</span>
+                	</li>
+                	
+                </div>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+	
+  </body> 
+  <script
+  src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.19/angular.js">
+  </script>
+  <script type="text/javascript">
+    angular.module("notesApp",[]).controller("MainCtrl",["$http","$scope","$window",function($http,$scope,$window){
+      self=this;
+      $http({
+                url: "http://localhost:5000/user/portfolio",
+                method: "GET"
+            }).then(function successCallback(response) {
+      console.log(response.data)
+      	$scope.transactions=response.data["transactions"];
+      	$scope.name=response.data["name"];
+      	$scope.money=parseFloat(response.data["amount"]);
+        console.log("yay");
+        //var landingUrl = "index.html";
+        //        $window.location.href = landingUrl;
+      }, function errorCallback(response) {
+                    console.log(response);
+    });
+            self.login = function(){
+                    console.log("login");
+                    var landingUrl = "login.html";
+                $window.location.href = landingUrl;
+            };
+            self.signup = function(){
+                    console.log("signup");
+                    var landingUrl = "signup.html";
+                $window.location.href = landingUrl;
+            };
+
+            self.home = function(){
+                    console.log("home");
+                    var landingUrl = "index.html";
+                $window.location.href = landingUrl;
+            };
+            self.proforio = function(){
+                    console.log("signup");
+                    if($scope.user){
+                      var landingUrl = "proforio.html";
+                      $window.location.href = landingUrl;
+                    }
+                    else{
+                      return false;
+                }
+            };
+            self.logout = function(){
+                    console.log("logout");
+                    $http({
+                url: "http://localhost:5000/api/logout",
+                method: "GET"
+            }).then(function successCallback(response) {
+            console.log(response.data);
+            $scope.user=response.data["uname"];
+            $scope.money=parseFloat(response.data["amount"]);
+            }, function errorCallback(response) {
+                    console.log(response);
+            });
+            var landingUrl = "login.html";
+                $window.location.href = landingUrl;
+            };
+      }
+    
+    ])
+    
+  </script>
+  </body>
 </html>

@@ -13,13 +13,31 @@
     <!--<script type=text/javascript" src="../node_modules/zingchart-angularjs/src/zingchart-angularjs.js"></script>-->
     <script src = "https://cdn.zingchart.com/angular/zingchart-angularjs.js" ></script>
 
-    <!--<script src="../statics/js/app.js"></script>-->
-    <script >
+    <script type="text/javascript" src="app.js"></script>
+    <!--<script >
         angular.module("warren", ["zingchart-angularjs"]).controller("mainController", ["$http","$scope",function ($http,$scope) {
             self=this;
 
             console.log("start");
-            $scope.myData = [1,2,28,4,5];
+            /*$scope.myData = {
+    type: 'line',
+    series : [
+      { values: [54,23,34,23,43] },
+      { values: [10,15,16,20,40] }
+    ]
+};*/        /*
+            $scope.myData={  
+    type: "line",  
+    scaleX: {transform: {  
+    type: 'date'  ,
+    all: '%m/%d/%y  %h:%i %A'  
+} },  
+    series: [  
+        {  
+            values : [(1452412800000, 23.32),(1452585600000, 27.43),(1452844800000, 34.23), (1453276800000,27.23), (1454054400000, 29.32),(1454313600000, 22.45), (1454400000000, 53.32)]  
+        }  
+    ],
+      };*/
             $scope.money=10000;
             $scope.test="hello";
             $http({
@@ -78,6 +96,83 @@
                 });
             };
 
+            self.detail = function(symbol){
+                    console.log("in detail");
+                    data="{'symbol':"+symbol+"}";
+                    console.log(data);
+
+                    $http({
+                        url: "http://localhost:5000/stocks/detail",
+                        method:"POST",
+                        data:JSON.stringify(data),
+                        headers: {'Content-Type': 'application/json' }
+                    
+                    }).then(function successCallback(response) {
+                        console.log(response.data);
+                        //debugger;
+                        var a=response.data["actual"];
+                        var p=response.data["predict"];
+                        console.log(a);
+                        console.log(p);
+                        $scope.myData={  
+                            type: "line", 
+
+                            label: [
+                                {
+                                    text: "Open_price:<br>%plot-0-value",
+                                    'default-value': "__",
+                                    x: "15%",
+                                    y: "7%",
+                                    'background-color': "blue ",
+                                    'font-family': "Georgia",
+                                    'font-color': "white",
+                                    'font-size':14,
+                                    height: "15%",
+                                    width: "10%",
+                                    'border-radius': "5px"
+                                },
+                                {
+                                  text: "Red:<br>%plot-1-value",
+                                  'default-value': "__",
+                                  x: "30%",
+                                  y: "7%",
+                                  'background-color': "red #D31E1E",
+                                  'font-family': "Georgia",
+                                  'font-color': "white",
+                                  'font-size':14,
+                                  height: "15%",
+                                  width: "10%",
+                                  'border-radius': "5px"
+                                }],
+
+                            scaleX: {
+                                transform: {  
+                                    type: 'date'  ,
+                                    all: '%m/%d/%y '  
+                                    }
+                                }, 
+
+                            series: [  
+                                {  
+                                    values : a  ,
+                                    "line-color":"blue"  
+                                },
+                                {
+                                    values:  p    ,
+                                    "line-color":"red"
+                                } 
+                            ],
+                        };
+
+                    // this callbalsck will be called asynchronously
+                    // when the response is available
+                    }, function errorCallback(response) {
+                    console.log(response);
+                    // called asynchronously if an error occurs
+                    // or server returns response with an error status.
+                });
+            };
+
             self.sell = function(symbol){
                     console.log("in sell");
                     data="{'symbol':"+symbol+"}";
@@ -101,27 +196,8 @@
                     // or server returns response with an error status.
                 });
             };
-
-            self.proforio=function () {
-                console.log("in proforio");
-                $http({
-                    url: "http://localhost:5000/user/portfolio",
-                    method: "GET"
-                }).then(function successCallback(response) {
-                    console.log(response.data);
-                    $scope.stocks=response.data;
-                    // this callbalsck will be called asynchronously
-                    // when the response is available
-                }, function errorCallback(response) {
-                    console.log(response);
-                    // called asynchronously if an error occurs
-                    // or server returns response with an error status.
-                });
-            };            
-
-
         }])
-    </script>
+    </script>-->
     <link rel="stylesheet" href="../statics/css/style.css">
 </head>
 <body>
@@ -150,20 +226,26 @@
             <!-- Collect the nav links, forms, and other content for toggling -->
            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
+                    
                     <li class="active"><a ng-click="ctrl.home()">Home <span class="sr-only">(current)</span></a></li>
-                    <li><a ng-click="ctrl.proforio()">Proforio</a></li>
                     <li><a href="about.html">About</a></li>
                     <li><a href="check.html">Check</a></li>
+                    <li><a ng-click="ctrl.proforio()">Proforio</a></li>
+                    <li ><a ng-click="ctrl.login()">Login </a></li>
+                    <li ><a ng-click="ctrl.signup()">Signup </a></li>
+                    <li ><a ng-click="ctrl.logout()">Logout </a></li>
+                    
+                    
                 </ul>
 
                 <ul class="nav navbar-nav navbar-right">
-                    <li><p class="navbar-text">Michael</p></li>
+                    <li><p class="navbar-text">User: {{user}}</p></li>
                     <li><p class="navbar-text">Money: {{money}}</p></li>
                 </ul>
             </div><!-- /.navbar-collapse -->
        </div><!-- /.container-fluid -->
     </nav>
-
+    <span >{{ctrl.disable}}</span>
     <div ng-repeat="(symbol, object) in stocks">
         <div class="panel panel-default">
             <div class="panel-heading">
@@ -171,18 +253,19 @@
                 <span class="name">{{object.name}}</span>
                 <span>{{object.price}}</span>
                 <span class="change">{{object.change}}</span>
-
+                
+                
                 <div class="pull-right btn-group">
-                <button class="btn btn-primary" ng-click="ctrl.buy(symbol)">Buy</button>
-                <button class="btn btn-danger" ng-click="ctrl.sell(symbol)">Sell</button>
-                <button class="btn btn-default" data-toggle="collapse" href="#{{symbol}}">Detail</button>
+                <button class="btn btn-primary" ng-mouseover="ctrl.disable()" id="buy" ng-click="ctrl.buy(symbol)" >Buy</button>
+                <button class="btn btn-danger" ng-mouseover="ctrl.disable()" id="sell" ng-click="ctrl.sell(symbol)">Sell</button>
+                <button class="btn btn-default"  data-toggle="collapse" ng-click="ctrl.detail(symbol)" href="#{{symbol}}">Detail</button>
 
                 </div>
                 <div class="clearfix"></div>
             </div>
             <div id="{{symbol}}" class="panel-collapse collapse ">
                 <div id="new-tasks-list" class="panel-body task-list">
-                    <zingchart id="{{object.symbol}}" zc-values="myData" zc-height=500 zc-width=600 zc-type="line"></zingchart>
+                    <zingchart id="{{object.symbol}}" zc-json="myData" zc-height=500 zc-width=600 zc-type="line"></zingchart>
                 </div>
             </div>
 

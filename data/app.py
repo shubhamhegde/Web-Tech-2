@@ -10,10 +10,19 @@ from urllib.request import urlopen
 import json
 from flask import render_template
 import yfinance as yf
+from statsmodels.tsa.ar_model import AR
+from datetime import timedelta
+import time
+import random
+from flask import Flask, redirect, url_for, escape, request, render_template, jsonify
+import MySQLdb
 
 
-#app = flask.Flask(__name__, template_folder="../views/")
-app=flask.Flask(__name__)
+db = MySQLdb.connect(host="localhost", user="root", passwd="", db="stockdb")    #new
+cur = db.cursor()   #new
+
+app = flask.Flask(__name__, template_folder="../views/")
+#app=flask.Flask(__name__)
 CORS(app)
 global user_balance
 user_balance = 10000
@@ -21,7 +30,8 @@ global portfolio
 portfolio = {}
 global all_stocks
 all_stocks = {}
-
+session={}
+client=app.test_client()
 def getAllCompanies():
     companies = ["ABT", "ABBV", "ADBE", "ADT", "AAP", "AES", "AFL", "AMG", "A", 
                 "APD", "AKAM", "AA", "AGN", "ALXN", "ALLE", "ADS", "ALL", "ALTR", "MO", "AMZN", "AEE",
@@ -59,8 +69,95 @@ def getAllCompanies():
 
 
 def getSymbols():
-    symbols = ["ABT", "ABBV", "ADBE", "ADT", "AAP", "AES", "AFL", "AMG", "A", "APD"]
+    symbols = ["ABT", "ABBV", "ADBE", "ADT", "AAP", "AES", "AFL", "AMG", "A", 
+                            "APD"]
     return symbols
+
+@app.route('/api/register', methods=['POST'])
+def register():
+    json_data = request.get_json()
+    username=json_data['username']
+    name=json_data['name']
+    password=json_data['password']
+    amount='10000'
+    userid=random.choice(range(100))
+    temp = "Select * from user";
+    cur.execute(temp)
+    userdetails=[dict(
+                id=row[0],
+                name=row[1],
+                uname=row[2],
+                pw=row[3],
+                amount=row[4],
+            ) for row in cur.fetchall()]
+    f=1
+    while(f==1):
+        for i in userdetails:
+            if(i['id']==userid):
+                f=2
+                userid=random.choice(range(100))
+                break
+        if(f==2):
+            f=1
+        else:
+            f=0
+    #temp = "Insert into User(UserID,Name,Username,Password,Amount) values (%s,%s,%s,%s,%s)"(userid,#('"+userid+"','"+name+"','"+username+"','"+pwd+"',10000);"
+    cur.execute("""Insert into User(UserID,Name,Username,Password,Amount) values (%s,%s,%s,%s,%s)""",(userid,name,username,password,amount))
+    db.commit()
+    status = 'success'
+    return jsonify({'result': status})
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    json_data = request.get_json()
+    uname=json_data["username"]
+    pwd=json_data["pwd"]
+    temp = "Select * from user where Username='"+uname+"' and Password='"+pwd+"';"
+    cur.execute(temp)
+    userdetails=[dict(
+                id=row[0],
+                name=row[1],
+                uname=row[2],
+                pw=row[3],
+                amount=row[4],
+            ) for row in cur.fetchall()]
+    if(len(userdetails)==1):
+        #cur.execute("""Insert into User(UserID,Name,Username,Password,Amount) values (%s,%s,%s,%s,%s)""",(userid,name,username,password,amount))
+        cur.execute("truncate logged")
+        cur.execute("""Insert into logged(userid,name,username,password,amount) values (%s,%s,%s,%s,%s)""",(userdetails[0]["id"],userdetails[0]["name"],userdetails[0]["uname"],userdetails[0]["pw"],userdetails[0]["amount"]))
+        status = True
+    else:
+        status = False
+    db.commit()
+    return jsonify({'result': status})
+
+@app.route('/api/user',methods=['GET'])
+def user():
+    temp = "Select * from logged;"
+    cur.execute(temp)
+    userdetails=[dict(
+                id=row[0],
+                name=row[1],
+                uname=row[2],
+                pw=row[3],
+                amount=row[4],
+            ) for row in cur.fetchall()]
+    x=dict()
+    x["uname"]=""
+    x["amount"]=""
+    if(userdetails):
+        x["uname"]=userdetails[0]["uname"]
+        x["amount"]=str(userdetails[0]["amount"])
+    return jsonify(x)
+
+@app.route('/api/logout',methods=['GET'])
+def logout():
+    cur.execute("truncate logged")
+    x=dict()
+    x["uname"]=""
+    x["amount"]=""
+    db.commit()
+    return jsonify(x)
 
 @app.route('/stocks/all')
 def allStocks():
@@ -110,15 +207,64 @@ def buyStock():
     global all_stocks
     global portfolio
     global user_balance
-    symbol = flask.request.get_json()#.encode('ascii')
-    print(symbol)
-    symbol = symbol[10:-1]
+    #symbol = flask.request.get_json()#.encode('ascii')
+    #symbol = symbol[10:-1]
+    x = flask.request.get_json()#.encode('ascii')
+    symbol = x["symbol"]
+    username=x["username"]
     print(all_stocks.keys())
     print(symbol,type(symbol))
     #quantity = flask.request.form['quantity']
     stock = all_stocks[symbol]
     price = stock["price"]
+    transid=random.choice(range(1000))
+    temp = "Select * from user where Username='"+username+"';"
+    cur.execute(temp)
+    userdetails=[dict(
+                id=row[0],
+                name=row[1],
+                uname=row[2],
+                pw=row[3],
+                amount=row[4],
+            ) for row in cur.fetchall()]
+    uid=userdetails[0]["id"]
+    amount=float(userdetails[0]["amount"])
+    temp = "Select * from transactions";
+    cur.execute(temp)
+    transdetails=[dict(
+                tid=row[0],
+                uid=row[1],
+                c_s=row[2],
+                a_p=row[3],
+                a_s=row[4],
+            ) for row in cur.fetchall()]
+    f=1
+    while(f==1):
+        for i in transdetails:
+            if(i['tid']==transid):
+                f=2
+                transid=random.choice(range(1000))
+                break
+        if(f==2):
+            f=1
+        else:
+            f=0
+    amount-=float(price)
+    cur.execute("""Insert into transactions(TID,UID,Company_Symbol,Amount_Purchased,Amount_Sold) values (%s,%s,%s,%s,%s)""",(transid,uid,symbol,price,0))
+    cur.execute("""Update user set AMOUNT=%s where UserID=%s""",(amount,uid));
+    cur.execute("""Update logged set AMOUNT=%s where userid=%s""",(amount,uid))
+    db.commit()
+    #    portfolio[symbol] = {"quantity": portfolio[symbol]["quantity"] + 1, "price": all_stocks[symbol]["price"], "name": all_stocks[symbol]["name"], "change": all_stocks[symbol]["change"]}
+    #else:
+    #    portfolio[symbol] = {"quantity": 1, "price": all_stocks[symbol]["price"], "name": all_stocks[symbol]["name"], "change": all_stocks[symbol]["change"]}
 
+    #user_balance -= float(price)
+
+    print(amount)
+
+    return flask.jsonify(amount)
+
+    '''
     if symbol in portfolio:
         portfolio[symbol] = {"quantity": portfolio[symbol]["quantity"] + 1, "price": all_stocks[symbol]["price"], "name": all_stocks[symbol]["name"], "change": all_stocks[symbol]["change"]}
     else:
@@ -129,9 +275,10 @@ def buyStock():
     print(user_balance)
 
     return flask.jsonify(user_balance)
-
+    '''
 @app.route('/stocks/sell', methods=['POST'])
 def sellStock():
+    '''
     global all_stocks
     global portfolio
     global user_balance
@@ -142,28 +289,181 @@ def sellStock():
     #quantity = flask.request.form['quantity']
     stock = all_stocks[symbol]
     price = stock["price"]
-
+    '''
+    x = flask.request.get_json()#.encode('ascii')
+    symbol = x["symbol"]
+    username=x["username"]
+    print(all_stocks["A"])
+    print(symbol,type(symbol))
+    '''
     if symbol in portfolio:
         quantity = portfolio[symbol]["quantity"]
         if quantity > 0:
             user_balance += float(price)
             portfolio[symbol] = {"quantity": quantity - 1, "price": all_stocks[symbol]["price"], "name": all_stocks[symbol]["name"], "change": all_stocks[symbol]["change"]}
-
+    '''
+    stock = all_stocks[symbol]
+    price = stock["price"]
+    temp = "Select * from user where Username='"+username+"';"
+    cur.execute(temp)
+    userdetails=[dict(
+                id=row[0],
+                name=row[1],
+                uname=row[2],
+                pw=row[3],
+                amount=row[4],
+            ) for row in cur.fetchall()]
+    uid=userdetails[0]["id"]
+    amount=float(userdetails[0]["amount"])
+    temp = "Select * from transactions;"
+    cur.execute(temp)
+    transdetails=[dict(
+                tid=row[0],
+                uid=row[1],
+                c_s=row[2],
+                a_p=row[3],
+                a_s=row[4],
+            ) for row in cur.fetchall()]
+    transid=random.choice(range(1000))
+    f=1
+    while(f==1):
+        for i in transdetails:
+            if(i['tid']==transid):
+                f=2
+                transid=random.choice(range(1000))
+                break
+        if(f==2):
+            f=1
+        else:
+            f=0
+    temp = "Select * from transactions where UID='"+uid+"' and company_symbol='"+symbol+"';"
+    cur.execute(temp)
+    transdetails=[dict(
+                tid=row[0],
+                uid=row[1],
+                c_s=row[2],
+                a_p=row[3],
+                a_s=row[4],
+            ) for row in cur.fetchall()]
+    total=0
+    for i in transdetails:
+        total-=i["a_s"]
+        total+=i["a_p"]
+    print(total)
+    if(total>0):
+            amount+=float(price)
+            cur.execute("""Insert into transactions(TID,UID,Company_Symbol,Amount_Purchased,Amount_Sold) values (%s,%s,%s,%s,%s)""",(transid,uid,symbol,0,price))
+            cur.execute("""Update user set AMOUNT=%s where UserID=%s""",(amount,uid));
+            cur.execute("""Update logged set AMOUNT=%s where userid=%s""",(amount,uid))
+            db.commit()
+            s={"status1":amount}
+    else:
+        print("Not in Stock")
+        s={"status":"Null"}
+    return jsonify(s)
+    '''
     else:
         print("Not in Stock")
         print(user_balance)
 
     return flask.jsonify(user_balance)
+    '''
+
+def date_unix(dates):
+   
+    dates=list(map(lambda x:x.to_pydatetime(),dates))
+    #d=datetime.strptime('2020-04-10','%Y-%m-%d')
+    unixtime = list(map(lambda x:time.mktime(x.timetuple()),dates))
+    return unixtime
+
+@app.route('/stocks/detail', methods=['POST'])
+def getDetail():
+    symbol = flask.request.get_json()#.encode('ascii')
+    symbol = symbol[10:-1]
+    print(symbol)
+    response = yf.Tickers(symbol)
+    hist=getattr(response.tickers,symbol).history('3mo')
+    open_data=hist.iloc[:,0]
+
+    model = AR(open_data)
+    model_fit = model.fit(disp=0)
+    print(model_fit.summary())
+    predictions = model_fit.predict(start=len(open_data),end=len(open_data)+9,dynamic=False)
+
+    dates=open_data.index.tolist()
+    final_date=dates[-1].to_pydatetime()
+    dates=date_unix(dates)
+    open_data=list(open_data)
+   
+    l=[]
+    for i in range(1,11):
+        l.append(final_date+timedelta(days=i))
+
+    predict_dates=list(map(lambda x:time.mktime(x.timetuple()),l))
+    predict_open=list(predictions)
+
+    actual=list(zip(dates,open_data))
+    predict=list(zip(predict_dates,predict_open))
+
+    data={"actual":actual,"predict":predict}
+    return flask.jsonify(data)
+
 
 @app.route('/user/balance')
 def getBalance():
+    '''
     global user_balance
     return flask.jsonify(user_balance)
+    '''
+    temp = "Select * from logged;"
+    cur.execute(temp)
+    userdetails=[dict(
+                id=row[0],
+                name=row[1],
+                uname=row[2],
+                pw=row[3],
+                amount=row[4],
+            ) for row in cur.fetchall()]
+    return flask.jsonify(str(userdetails[0]["amount"]))
 
-@app.route('/user/portfolio')
+@app.route('/user/portfolio', methods=['GET'])
 def getPortfolio():
+    '''
     global portfolio
     return flask.jsonify(portfolio)
+    '''
+    temp = "Select * from logged;"
+    cur.execute(temp)
+    userdetails=[dict(
+                id=row[0],
+                name=row[1],
+                uname=row[2],
+                pw=row[3],
+                amount=row[4],
+            ) for row in cur.fetchall()]
+    uid=userdetails[0]["id"]
+    uname=userdetails[0]["uname"]
+    amount=userdetails[0]["amount"]
+    temp = "Select * from transactions where uid='"+uid+"';"
+    cur.execute(temp)
+    transdetails=[dict(
+                tid=row[0],
+                uid=row[1],
+                c_s=row[2],
+                a_p=row[3],
+                a_s=row[4],
+            ) for row in cur.fetchall()]
+    stuff={"transactions":[],"amount":str(amount),"name":uname}
+    for i in transdetails:
+        if(i["a_p"]):
+            key1="a_p"
+            string="Amount_Purchased"
+        else:
+            key1="a_s"
+            string="Amount_Sold"
+        stuff["transactions"].append({"company_symbol":i["c_s"],string:str(i[key1])})
+    return flask.jsonify(stuff)
+
 
 @app.route('/about/description', methods=['GET'])
 def getDescription():
@@ -187,15 +487,15 @@ def checkCompany():
     term=term[8:-1]
     #print(type(term))
     res=[]
+    final_result={}
     allCompanies=getAllCompanies();
-    #print(allCompanies)
+    print(allCompanies)
     for company in allCompanies:
         #print(type(company))
         if(term==company[:len(term)]):
             res.append(company)
+    print(res)
     return flask.jsonify(res)
-
-
 @app.after_request
 def apply_caching(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
